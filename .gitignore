@@ -1,0 +1,14 @@
+*.iml
+.gradle
+.gradletasknamecache
+gradle-app.setting
+/local.properties
+/.idea
+.DS_Store
+/build
+./libs
+app/release
+app/src/main/assets
+/captures
+.externalNativeBuild
+.cxx
