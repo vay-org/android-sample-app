@@ -63,11 +63,20 @@ public class MainActivity extends AppCompatActivity {
 		feedbackBox = findViewById(R.id.feedback_text);
 		currentMovementText = findViewById(R.id.phase_info);
 
+		try {
+			URI uri = new URI(url);
+			analyzer = new Analyzer(uri, graphicOverlay, this, exerciseKey);
+		} catch (IOException | URISyntaxException e) {
+			Log.e(TAG, "Creating client failed.");
+			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
+		}
 		// Check camera permission. If not granted, ask for permission. Handle response in onRequestPermissionsResult.
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED) {
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+				== PackageManager.PERMISSION_DENIED) {
 			// If camera permission is not granted, ask for it.
-			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
-					MY_PERMISSION_REQUEST_CAMERA);
+			ActivityCompat.requestPermissions(this, new String[] {
+					Manifest.permission.CAMERA }, MY_PERMISSION_REQUEST_CAMERA);
 		} else {
 			setupCameraXUseCases();
 		}
@@ -76,7 +85,8 @@ public class MainActivity extends AppCompatActivity {
 	// Handles the result of asking for camera permission. If the user accepted the request, the same
 	// setup as in the onCreate is continued, otherwise a toast is displayed.
 	@Override
-	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode,
+			@NonNull String[] permissions, @NonNull int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 		if (requestCode == MY_PERMISSION_REQUEST_CAMERA) {
 			if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -90,12 +100,11 @@ public class MainActivity extends AppCompatActivity {
 	/** First sets up the vay client, then the cameraX preview and analysis use cases. **/
 	private void setupCameraXUseCases() {
 		cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-		CompletableFuture.runAsync(this::prepareClient).thenRunAsync(()->{
+		cameraProviderFuture.addListener(() -> {
 			try {
 				ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
 				CameraSelector cameraSelector = new CameraSelector.Builder()
-						.requireLensFacing(lensFacing)
-						.build();
+						.requireLensFacing(lensFacing).build();
 				bindPreview(cameraProvider, cameraSelector);
 				bindAnalysis(cameraProvider, cameraSelector);
 			} catch (ExecutionException | InterruptedException e) {
@@ -106,7 +115,9 @@ public class MainActivity extends AppCompatActivity {
 		}, ContextCompat.getMainExecutor(this));
 	}
 
-	void bindPreview(@NonNull ProcessCameraProvider cameraProvider, @NonNull CameraSelector cameraSelector) {
+	void bindPreview(@NonNull ProcessCameraProvider cameraProvider,
+			@NonNull CameraSelector cameraSelector) {
+		cameraProvider.unbindAll();
 		// Preview setup.
 		Preview.Builder builder = new Preview.Builder();
 		if (targetResolution != null) {
@@ -121,9 +132,8 @@ public class MainActivity extends AppCompatActivity {
 		cameraProvider.bindToLifecycle(this, cameraSelector, previewUseCase);
 	}
 
-	private void bindAnalysis(
-			@NonNull ProcessCameraProvider cameraProvider, @NonNull CameraSelector cameraSelector) {
-
+	private void bindAnalysis(@NonNull ProcessCameraProvider cameraProvider,
+			@NonNull CameraSelector cameraSelector) {
 		ImageAnalysis.Builder builder = new ImageAnalysis.Builder()
 				.setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST);
 		if (targetResolution != null) {
@@ -149,18 +159,7 @@ public class MainActivity extends AppCompatActivity {
 			analyzer.setPendingImage(imageProxy); // Passes the image to the analyzer class.
 			imageProxy.close();
 		});
-
 		cameraProvider.bindToLifecycle(this, cameraSelector, analysisUseCase);
-	}
-
-	private void prepareClient() {
-		try {
-			analyzer = new Analyzer(new URI(url), graphicOverlay, this, exerciseKey);
-		} catch (IOException e) {
-			Log.e(TAG, "Creating client failed. " + e.getMessage());
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override

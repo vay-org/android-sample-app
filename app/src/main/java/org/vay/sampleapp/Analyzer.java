@@ -218,7 +218,6 @@ public class Analyzer {
 				overlay.postInvalidate();
 				Log.d(TAG, "GraphicOverlay invalidated.");
 			}
-
 		}
 	};
 }
