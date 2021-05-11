@@ -22,10 +22,11 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -63,14 +64,9 @@ public class MainActivity extends AppCompatActivity {
 		feedbackBox = findViewById(R.id.feedback_text);
 		currentMovementText = findViewById(R.id.phase_info);
 
-		try {
-			URI uri = new URI(url);
-			analyzer = new Analyzer(uri, graphicOverlay, this, exerciseKey);
-		} catch (IOException | URISyntaxException e) {
-			Log.e(TAG, "Creating client failed.");
-			e.printStackTrace();
-			throw new RuntimeException(e.getMessage());
-		}
+		// As creating the client contains network operations, it must be done on a separate thread.
+		new Thread(this::prepareClient).start();
+
 		// Check camera permission. If not granted, ask for permission. Handle response in onRequestPermissionsResult.
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
 				== PackageManager.PERMISSION_DENIED) {
@@ -79,6 +75,28 @@ public class MainActivity extends AppCompatActivity {
 					Manifest.permission.CAMERA }, MY_PERMISSION_REQUEST_CAMERA);
 		} else {
 			setupCameraXUseCases();
+		}
+	}
+
+	// Instantiates the analyzer, which in turn creates the client.
+	private void prepareClient() {
+		try {
+			URI uri = new URI(url);
+			analyzer = new Analyzer(uri, graphicOverlay, this, exerciseKey);
+		} catch (IOException e) {
+			Log.e(TAG, "Creating client failed.");
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			runOnUiThread(()-> {
+				Toast.makeText(MainActivity.this,
+					"Invalid server url, please ensure to insert the correct url!",
+					Toast.LENGTH_LONG).show();
+				setCurrentMovementText("Invalid server url, please ensure to insert the correct url!");
+				currentMovementText.setBackgroundColor(Color.RED);
+				currentMovementText.setTextColor(Color.WHITE);
+		});
+			Log.e(TAG, "Invalid server url, please ensure to insert the correct url!");
+			e.printStackTrace();
 		}
 	}
 
@@ -97,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	/** First sets up the vay client, then the cameraX preview and analysis use cases. **/
+	// Sets up the cameraX preview and analysis use cases.
 	private void setupCameraXUseCases() {
 		cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 		cameraProviderFuture.addListener(() -> {
@@ -143,20 +161,23 @@ public class MainActivity extends AppCompatActivity {
 
 		needUpdateGraphicOverlayImageSourceInfo = true;
 		analysisUseCase.setAnalyzer(Executors.newSingleThreadExecutor(), imageProxy -> { // ContextCompat.getMainExecutor(this)
-			if (needUpdateGraphicOverlayImageSourceInfo) {
-				boolean isImageFlipped = lensFacing == CameraSelector.LENS_FACING_FRONT;
-				int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
-				if (rotationDegrees == 0 || rotationDegrees == 180) {
-					graphicOverlay.setImageSourceInfo(
-							imageProxy.getWidth(), imageProxy.getHeight(), isImageFlipped);
-				} else {
-					graphicOverlay.setImageSourceInfo(
-							imageProxy.getHeight(), imageProxy.getWidth(), isImageFlipped);
+			// Analyzer could be null, if the client has not yet been created. In that case we do nothing.
+			if (analyzer != null) {
+				if (needUpdateGraphicOverlayImageSourceInfo) {
+					boolean isImageFlipped = lensFacing == CameraSelector.LENS_FACING_FRONT;
+					int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+					if (rotationDegrees == 0 || rotationDegrees == 180) {
+						graphicOverlay.setImageSourceInfo(
+								imageProxy.getWidth(), imageProxy.getHeight(), isImageFlipped);
+					} else {
+						graphicOverlay.setImageSourceInfo(
+								imageProxy.getHeight(), imageProxy.getWidth(), isImageFlipped);
+					}
+					analyzer.setOverlay(graphicOverlay);
+					needUpdateGraphicOverlayImageSourceInfo = false;
 				}
-				analyzer.setOverlay(graphicOverlay);
-				needUpdateGraphicOverlayImageSourceInfo = false;
+				analyzer.setPendingImage(imageProxy); // Passes the image to the analyzer class.
 			}
-			analyzer.setPendingImage(imageProxy); // Passes the image to the analyzer class.
 			imageProxy.close();
 		});
 		cameraProvider.bindToLifecycle(this, cameraSelector, analysisUseCase);
@@ -171,8 +192,9 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
+	// Gets called when the device rotates.
 	@Override
-	public void onConfigurationChanged(Configuration newConfig) { // Gets called when the device rotates.
+	public void onConfigurationChanged(@NotNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		needUpdateGraphicOverlayImageSourceInfo = true;
 	}
