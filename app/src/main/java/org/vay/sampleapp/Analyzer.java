@@ -13,6 +13,7 @@ import com.vaysports.vup.VupImageInterpolatedResponseEvent;
 import com.vaysports.vup.VupImageResponseEvent;
 import com.vaysports.vup.VupMetadataResponseEvent;
 import com.vaysports.vup.VupReadyEvent;
+import com.vaysports.vup.VupReadyForSendingEvent;
 import com.vaysports.vup.VupRepetitionEvent;
 
 import java.io.IOException;
@@ -128,17 +129,22 @@ public class Analyzer {
 		}
 
 		/** Gets called when the session has been successfully configured, indicating readiness to
-		 *  process images. Hence the first image should be sent here. **/
+		 *  process images. This automatically triggers the first onReadyForSending() call. **/
 		@Override
 		public void onMetadataResponse(VupMetadataResponseEvent vupMetadataResponseEvent) {
-			executor.execute(()-> processImage()); // Sends the first image.
 		}
 
-		/** The results of the image analysis are received here. The appropriate place to send a new
-		 *  image. If you visualize the points, they should be updated here. **/
+		/** This event is the intended place to send images for analysis. It gets called
+		 * periodically, once a metadata response has been received. **/
+		@Override
+		public void onReadyForSending(VupReadyForSendingEvent event) {
+			executor.execute(()-> processImage());
+		}
+
+		/** The results of the image analysis are received here. If you visualize the points,
+		 * they should be updated here. **/
 		@Override
 		public void onImageResponse(VupImageResponseEvent vupImageResponseEvent) {
-			executor.execute(()-> processImage()); // Send a new image.
 			VaysportsVup.HumanPoints points = vupImageResponseEvent.getMessage().getPoints();
 			resetGraphic(points); // Redraws the skeleton.
 			activity.setCurrentMovementText(vupImageResponseEvent.getMessage().getCurrentMovement());
