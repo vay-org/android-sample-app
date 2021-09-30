@@ -32,12 +32,13 @@ public class AnalyserWrapper {
 	private GraphicOverlay overlay;
 	private final MainActivity activity;
 	private boolean isShutdown = false;
+	private final String token = "DUMMY-ANDROID-API-KEY";
 
 	public AnalyserWrapper(String url, GraphicOverlay overlay, MainActivity activity, int exerciseKey) throws IOException {
 		this.overlay = overlay;
 		this.activity = activity;
 		this.analyser = AnalyserFactory.createStreamingAnalyser(
-				url, "AndroidSampleApp", exerciseKey, listener);
+				url, token, exerciseKey, listener);
 	}
 
 	/** Used to set a new GraphicOverlay in case configurations change. **/
