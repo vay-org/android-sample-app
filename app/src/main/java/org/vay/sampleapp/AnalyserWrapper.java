@@ -24,7 +24,7 @@ import ai.vay.client.model.human.BodyPointType;
 import ai.vay.client.model.human.Point;
 import ai.vay.client.model.motion.FormMetricCheck;
 
-/** Analyser  wrapper class responsible for creating and closing the client,
+/** Analyser  wrapper class responsible for creating and closing the analyser,
  * as well as enqueueing the current image. **/
 public class AnalyserWrapper {
 	private final String TAG = this.getClass().getSimpleName();
@@ -45,14 +45,14 @@ public class AnalyserWrapper {
 		this.overlay = overlay;
 	}
 
-	/** Closes the client and prevents sending further images. **/
+	/** Closes the analyser and prevents sending further images. **/
 	public void close() {
 		new Thread(analyser::stop).start();
 		isShutdown = true;
 	}
 
 	/** Prepares and enqueues the current image. Converts the imageProxy (received by the cameraX
-	 * analyzer function) to byte array, rotating it upright if needed. **/
+	 * analyser function) to byte array, rotating it upright if needed. **/
 	@SuppressLint("UnsafeExperimentalUsageError")
 	public void setPendingImage(ImageProxy imageProxy) {
 		if (isShutdown) {
@@ -98,7 +98,7 @@ public class AnalyserWrapper {
 			}
 		}
 
-		/** Gets called when the client has been closed. **/
+		/** Gets called when the analyser has been closed. **/
 		@Override
 		public void onStop() {
 		}

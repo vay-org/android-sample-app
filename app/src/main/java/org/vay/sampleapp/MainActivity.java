@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
 		feedbackBox = findViewById(R.id.feedback_text);
 		currentMovementText = findViewById(R.id.phase_info);
 
-		// As creating the client contains network operations, it must be done on a separate thread.
-		new Thread(this::prepareClient).start();
+		// As creating the analyserWrapper contains network operations, it must be done on a separate thread.
+		new Thread(this::createAnalyserWrapper).start();
 
 		// Check camera permission. If not granted, ask for permission. Handle response in onRequestPermissionsResult.
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -76,12 +76,12 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	// Instantiates the analyserWrapper, which in turn creates the client.
-	private void prepareClient() {
+	// Instantiates the analyserWrapper.
+	private void createAnalyserWrapper() {
 		try {
 			analyserWrapper = new AnalyserWrapper(url, graphicOverlay, this, exerciseKey);
 		} catch (IOException e) {
-			Log.e(TAG, "Creating client failed.");
+			Log.e(TAG, "Creating VAY analyser failed.");
 			e.printStackTrace();
 		}
 	}
@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
 		needUpdateGraphicOverlayImageSourceInfo = true;
 		analysisUseCase.setAnalyzer(Executors.newSingleThreadExecutor(), imageProxy -> { // ContextCompat.getMainExecutor(this)
-			// Analyzer could be null, if the client has not yet been created. In that case we do nothing.
+			// AnalyzerWrapper could be null, if it has not yet been created. In that case we do nothing.
 			if (analyserWrapper != null) {
 				if (needUpdateGraphicOverlayImageSourceInfo) {
 					boolean isImageFlipped = lensFacing == CameraSelector.LENS_FACING_FRONT;
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		// Close the client.
+		// Close the analyser.
 		if (analyserWrapper != null) {
 			analyserWrapper.close();
 		}
