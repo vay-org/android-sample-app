@@ -24,8 +24,8 @@ import ai.vay.client.model.human.BodyPointType;
 import ai.vay.client.model.human.Point;
 import ai.vay.client.model.motion.FormMetricCheck;
 
-/** Analyzer class responsible for creating and closing the client,
- * as well as sending the current image to the server. **/
+/** Analyser  wrapper class responsible for creating and closing the client,
+ * as well as enqueueing the current image. **/
 public class AnalyserWrapper {
 	private final String TAG = this.getClass().getSimpleName();
 	private final Analyser analyser;
@@ -51,7 +51,7 @@ public class AnalyserWrapper {
 		isShutdown = true;
 	}
 
-	/** Sets and prepares the current image. Converts the imageProxy (received by the cameraX
+	/** Prepares and enqueues the current image. Converts the imageProxy (received by the cameraX
 	 * analyzer function) to byte array, rotating it upright if needed. **/
 	@SuppressLint("UnsafeExperimentalUsageError")
 	public void setPendingImage(ImageProxy imageProxy) {
@@ -61,27 +61,23 @@ public class AnalyserWrapper {
 		analyser.enqueueInput(AnalyserFactory.createInput(ImageConverter.getByteArrayFromImageProxy(imageProxy)));
 	}
 
-	/** Anonymous inner listener class that reacts to server responses. Handles sending of images,
-	 *  metadata, updates views and redraws the skeleton. **/
+	/** Anonymous inner listener class where custom behaviour upon various events can be defined. **/
 	private final Listener listener = new Listener() {
 		private final String TAG = this.getClass().getSimpleName();
 		private int correctReps = 0;
 		private final Object lock = new Object();
 
-		/** Gets called after the connection has been established. Sends the appropriate metadata, to
-		 *  configure the exercise session. **/
+		/** Gets called after the connection has been established. **/
 		@Override
 		public void onReady(ReadyEvent ReadyEvent) {
 		}
 
-		/** The results of the image analysis are received here. If you visualize the points,
-		 * they should be updated here. **/
+		/** The results of the image analysis (keypoints) - for each sent frame - are received here.
+		 *  If you visualize the points, they should be updated here. **/
 		@Override
 		public void onPose(PoseEvent ImageResponseEvent) {
 			Map<BodyPointType, Point> points = ImageResponseEvent.getPose().getPoints();
 			resetGraphic(points); // Redraws the skeleton.
-			// Current movement will be 'positioning' until the exercises starting position criteria
-			// has been met, then it will display the exercise name.
 		}
 
 		/** Whenever a repetition is completed (with or without metric violations) this listener gets
@@ -89,6 +85,7 @@ public class AnalyserWrapper {
 		 *  corresponding corrections for faulty reps. **/
 		@Override
 		public void onRepetition(RepetitionEvent RepetitionEvent) {
+			// A list of violated metric checks for this rep.
 			List<FormMetricCheck> violatedMetricChecks = RepetitionEvent.getRepetition()
 					.getViolatedFormMetricChecks();
 			if (violatedMetricChecks.isEmpty()) {
@@ -96,9 +93,8 @@ public class AnalyserWrapper {
 				activity.setRepetitionsText(correctReps);
 				activity.displayPositiveMessage();
 			} else {
-				// A list of violated metrics for this rep.
+				// Here we simply display the first correction from the list of violated metric checks.
 				activity.displayCorrection(violatedMetricChecks.get(0).getFormCorrections().get(0));
-				// Here we simply display the first correction from the list of violated metrics.
 			}
 		}
 
@@ -113,19 +109,26 @@ public class AnalyserWrapper {
 			Log.d(TAG, errorEvent.getErrorText());
 		}
 
+		/** Gets called when the session state changes. There are three states: NO_HUMAN, POSITIONING
+		 * and EXERCISING **/
 		@Override
 		public void onSessionStateChanged(SessionStateChangedEvent event) {
 			activity.setCurrentMovementText(event.getSessionState().name());
 		}
 
+		/** Gets called simultaneously with onPose event (for every analyzed image) and contains
+		 * a list with the different metrics and their values.  **/
 		@Override
 		public void onFormMetricValues(FormMetricValuesEvent event) {
 		}
 
+		/** Gets called simultaneously with onPose event. Contains a list of violated metric checks
+		 * from the corresponding frame. **/
 		@Override
 		public void onFormFeedback(FormFeedbackEvent event) {
 		}
 
+		/** NOT YET IMPLEMENTED **/
 		@Override
 		public void onSessionQualityChanged(SessionQualityChangedEvent event) {
 		}

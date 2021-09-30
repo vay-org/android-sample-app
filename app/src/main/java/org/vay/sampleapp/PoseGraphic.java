@@ -23,6 +23,7 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 
 	private final Paint whitePaint;
 	private final Map<BodyPointType, ai.vay.client.model.human.Point> points;
+	// Defines the connections between the different points to draw the skeleton.
 	private final List<Map.Entry<BodyPointType, BodyPointType>> lineConnections = Arrays.asList(
 			new AbstractMap.SimpleEntry<>(BodyPointType.NOSE, BodyPointType.NECK),
 			new AbstractMap.SimpleEntry<>(BodyPointType.NECK, BodyPointType.LEFT_SHOULDER),

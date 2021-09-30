@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
-	// Instantiates the analyzer, which in turn creates the client.
+	// Instantiates the analyserWrapper, which in turn creates the client.
 	private void prepareClient() {
 		try {
 			analyserWrapper = new AnalyserWrapper(url, graphicOverlay, this, exerciseKey);
@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
 					analyserWrapper.setOverlay(graphicOverlay);
 					needUpdateGraphicOverlayImageSourceInfo = false;
 				}
-				analyserWrapper.setPendingImage(imageProxy); // Passes the image to the analyzer class.
+				analyserWrapper.setPendingImage(imageProxy); // Passes the image to the analyser.
 			}
 			imageProxy.close();
 		});

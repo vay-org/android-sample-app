@@ -40,6 +40,10 @@ dependencies {
     implementation 'ai.vay.api:java-client:0.1.0'
     // Guava for Listenable Future
     implementation 'com.google.guava:guava:30.1.1-jre'
+    // gRPC
+    def grpcVersion = "1.38.0"
+    implementation "io.grpc:grpc-okhttp:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
     // CameraX dependencies:
     def camerax_version = "1.1.0-alpha04"
     implementation "androidx.camera:camera-core:${camerax_version}"
