@@ -25,8 +25,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -49,9 +47,9 @@ public class MainActivity extends AppCompatActivity {
 	// finds the closest supported resolution of the device.
 
 	//Analysis
-	private Analyzer analyzer;
+	private AnalyserWrapper analyserWrapper;
 	private final int exerciseKey = 1; // Key 1 = Squat
-	private final String url = "Insert correct url here."; // The servers url.
+	private final String url = "tcps://api.mb.vay.ai:443"; // The servers url.
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -81,21 +79,9 @@ public class MainActivity extends AppCompatActivity {
 	// Instantiates the analyzer, which in turn creates the client.
 	private void prepareClient() {
 		try {
-			URI uri = new URI(url);
-			analyzer = new Analyzer(uri, graphicOverlay, this, exerciseKey);
+			analyserWrapper = new AnalyserWrapper(url, graphicOverlay, this, exerciseKey);
 		} catch (IOException e) {
 			Log.e(TAG, "Creating client failed.");
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			runOnUiThread(()-> {
-				Toast.makeText(MainActivity.this,
-					"Invalid server url, please ensure to insert the correct url!",
-					Toast.LENGTH_LONG).show();
-				setCurrentMovementText("Invalid server url, please ensure to insert the correct url!");
-				currentMovementText.setBackgroundColor(Color.RED);
-				currentMovementText.setTextColor(Color.WHITE);
-		});
-			Log.e(TAG, "Invalid server url, please ensure to insert the correct url!");
 			e.printStackTrace();
 		}
 	}
@@ -162,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 		needUpdateGraphicOverlayImageSourceInfo = true;
 		analysisUseCase.setAnalyzer(Executors.newSingleThreadExecutor(), imageProxy -> { // ContextCompat.getMainExecutor(this)
 			// Analyzer could be null, if the client has not yet been created. In that case we do nothing.
-			if (analyzer != null) {
+			if (analyserWrapper != null) {
 				if (needUpdateGraphicOverlayImageSourceInfo) {
 					boolean isImageFlipped = lensFacing == CameraSelector.LENS_FACING_FRONT;
 					int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
@@ -173,10 +159,10 @@ public class MainActivity extends AppCompatActivity {
 						graphicOverlay.setImageSourceInfo(
 								imageProxy.getHeight(), imageProxy.getWidth(), isImageFlipped);
 					}
-					analyzer.setOverlay(graphicOverlay);
+					analyserWrapper.setOverlay(graphicOverlay);
 					needUpdateGraphicOverlayImageSourceInfo = false;
 				}
-				analyzer.setPendingImage(imageProxy); // Passes the image to the analyzer class.
+				analyserWrapper.setPendingImage(imageProxy); // Passes the image to the analyzer class.
 			}
 			imageProxy.close();
 		});
@@ -187,8 +173,8 @@ public class MainActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		// Close the client.
-		if (analyzer != null) {
-			analyzer.close();
+		if (analyserWrapper != null) {
+			analyserWrapper.close();
 		}
 	}
 
