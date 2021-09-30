@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 	//Analysis
 	private AnalyserWrapper analyserWrapper;
 	private final int exerciseKey = 1; // Key 1 = Squat
-	private final String url = "tcps://api.mb.vay.ai:443"; // The servers url.
+	private final String url = "Insert correct server url here!"; // The servers url.
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

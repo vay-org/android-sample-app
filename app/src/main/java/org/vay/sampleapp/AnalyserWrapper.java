@@ -12,9 +12,13 @@ import java.util.Map;
 import ai.vay.client.api.Analyser;
 import ai.vay.client.api.Listener;
 import ai.vay.client.api.events.ErrorEvent;
+import ai.vay.client.api.events.FormFeedbackEvent;
+import ai.vay.client.api.events.FormMetricValuesEvent;
 import ai.vay.client.api.events.PoseEvent;
 import ai.vay.client.api.events.ReadyEvent;
 import ai.vay.client.api.events.RepetitionEvent;
+import ai.vay.client.api.events.SessionQualityChangedEvent;
+import ai.vay.client.api.events.SessionStateChangedEvent;
 import ai.vay.client.impl.AnalyserFactory;
 import ai.vay.client.model.human.BodyPointType;
 import ai.vay.client.model.human.Point;
@@ -76,7 +80,6 @@ public class AnalyserWrapper {
 		public void onPose(PoseEvent ImageResponseEvent) {
 			Map<BodyPointType, Point> points = ImageResponseEvent.getPose().getPoints();
 			resetGraphic(points); // Redraws the skeleton.
-			//activity.setCurrentMovementText(ImageResponseEvent.getMessage().getCurrentMovement());
 			// Current movement will be 'positioning' until the exercises starting position criteria
 			// has been met, then it will display the exercise name.
 		}
@@ -108,6 +111,23 @@ public class AnalyserWrapper {
 		@Override
 		public void onError(ErrorEvent errorEvent) {
 			Log.d(TAG, errorEvent.getErrorText());
+		}
+
+		@Override
+		public void onSessionStateChanged(SessionStateChangedEvent event) {
+			activity.setCurrentMovementText(event.getSessionState().name());
+		}
+
+		@Override
+		public void onFormMetricValues(FormMetricValuesEvent event) {
+		}
+
+		@Override
+		public void onFormFeedback(FormFeedbackEvent event) {
+		}
+
+		@Override
+		public void onSessionQualityChanged(SessionQualityChangedEvent event) {
 		}
 
 		/** Clears the old graphic and sets a new one. Used to redraw the skeleton. **/
