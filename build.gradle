@@ -4,7 +4,7 @@ buildscript {
         google()
         jcenter()
         maven {
-            url 'https://pkgs.dev.azure.com/vay-sports/Public/_packaging/distribution%40Local/maven/v1'
+            url 'https://gitlab.com/api/v4/projects/29307311/packages/maven'
         }
     }
     dependencies {
@@ -20,7 +20,7 @@ allprojects {
         google()
         jcenter()
         maven {
-            url 'https://pkgs.dev.azure.com/vay-sports/Public/_packaging/distribution%40Local/maven/v1'
+            url 'https://gitlab.com/api/v4/projects/29307311/packages/maven'
         }
     }
 }
