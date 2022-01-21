@@ -1,12 +1,9 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        feedName = project.hasProperty('feedName') ? project.feedName : 'libs'
+        feedName = project.hasProperty('feedName') ? project.feedName : 'distribution'
         feedUrl = project.hasProperty('feedUrl') ? project.feedUrl :
-                'https://gitlab.com/api/v4/projects/28530444/packages/maven'
-        tokenName = project.hasProperty('tokenName') ? project.tokenName :
-                'Private-Token'
-        token = project.hasProperty('token') ? project.token : gitLabPrivateToken
+                'https://gitlab.com/api/v4/projects/29307311/packages/maven'
     }
 
     repositories {
@@ -15,14 +12,6 @@ buildscript {
         maven {
             url feedUrl
             name feedName
-            credentials(HttpHeaderCredentials) {
-                name = tokenName
-                // the variable resides in ~/.gradle/gradle.properties
-                value = token
-            }
-            authentication {
-                header(HttpHeaderAuthentication)
-            }
         }
     }
     dependencies {
@@ -35,12 +24,9 @@ buildscript {
 
 allprojects {
     ext {
-        feedName = project.hasProperty('feedName') ? project.feedName : 'libs'
+        feedName = project.hasProperty('feedName') ? project.feedName : 'distribution'
         feedUrl = project.hasProperty('feedUrl') ? project.feedUrl :
-                'https://gitlab.com/api/v4/projects/28530444/packages/maven'
-        tokenName = project.hasProperty('tokenName') ? project.tokenName :
-                'Private-Token'
-        token = project.hasProperty('token') ? project.token : gitLabPrivateToken
+                'https://gitlab.com/api/v4/projects/29307311/packages/maven'
     }
 
     repositories {
@@ -49,14 +35,6 @@ allprojects {
         maven {
             url feedUrl
             name feedName
-            credentials(HttpHeaderCredentials) {
-                name = tokenName
-                // the variable resides in ~/.gradle/gradle.properties
-                value = token
-            }
-            authentication {
-                header(HttpHeaderAuthentication)
-            }
         }
     }
 }

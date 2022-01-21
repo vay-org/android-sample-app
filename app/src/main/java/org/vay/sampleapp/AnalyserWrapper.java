@@ -12,8 +12,6 @@ import java.util.Map;
 import ai.vay.client.api.Analyser;
 import ai.vay.client.api.Listener;
 import ai.vay.client.api.events.ErrorEvent;
-import ai.vay.client.api.events.FormFeedbackEvent;
-import ai.vay.client.api.events.FormMetricValuesEvent;
 import ai.vay.client.api.events.PoseEvent;
 import ai.vay.client.api.events.ReadyEvent;
 import ai.vay.client.api.events.RepetitionEvent;
@@ -22,7 +20,7 @@ import ai.vay.client.api.events.SessionStateChangedEvent;
 import ai.vay.client.impl.AnalyserFactory;
 import ai.vay.client.model.human.BodyPointType;
 import ai.vay.client.model.human.Point;
-import ai.vay.client.model.motion.FormMetricCheck;
+import ai.vay.client.model.motion.Feedback;
 
 /** Analyser  wrapper class responsible for creating and closing the analyser,
  * as well as enqueueing the current image. **/
@@ -87,15 +85,15 @@ public class AnalyserWrapper {
 		@Override
 		public void onRepetition(RepetitionEvent RepetitionEvent) {
 			// A list of violated metric checks for this rep.
-			List<FormMetricCheck> violatedMetricChecks = RepetitionEvent.getRepetition()
-					.getViolatedFormMetricChecks();
+			List<Feedback> violatedMetricChecks = RepetitionEvent.getRepetition()
+					.getFeedbacks();
 			if (violatedMetricChecks.isEmpty()) {
 				correctReps++;
 				activity.setRepetitionsText(correctReps);
 				activity.displayPositiveMessage();
 			} else {
 				// Here we simply display the first correction from the list of violated metric checks.
-				activity.displayCorrection(violatedMetricChecks.get(0).getFormCorrections().get(0));
+				activity.displayCorrection(violatedMetricChecks.get(0).getName());
 			}
 		}
 
@@ -115,18 +113,6 @@ public class AnalyserWrapper {
 		@Override
 		public void onSessionStateChanged(SessionStateChangedEvent event) {
 			activity.setCurrentMovementText(event.getSessionState().name());
-		}
-
-		/** Gets called simultaneously with onPose event (for every analyzed image) and contains
-		 * a list with the different metrics and their values.  **/
-		@Override
-		public void onFormMetricValues(FormMetricValuesEvent event) {
-		}
-
-		/** Gets called simultaneously with onPose event. Contains a list of violated metric checks
-		 * from the corresponding frame. **/
-		@Override
-		public void onFormFeedback(FormFeedbackEvent event) {
 		}
 
 		/** NOT YET IMPLEMENTED **/
