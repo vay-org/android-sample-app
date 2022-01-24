@@ -84,16 +84,16 @@ public class AnalyserWrapper {
 		 *  corresponding corrections for faulty reps. **/
 		@Override
 		public void onRepetition(RepetitionEvent RepetitionEvent) {
-			// A list of violated metric checks for this rep.
-			List<Feedback> violatedMetricChecks = RepetitionEvent.getRepetition()
+			// A list of violated feedbacks for this rep.
+			List<Feedback> violatedFeedbacks = RepetitionEvent.getRepetition()
 					.getFeedbacks();
-			if (violatedMetricChecks.isEmpty()) {
+			if (violatedFeedbacks.isEmpty()) {
 				correctReps++;
 				activity.setRepetitionsText(correctReps);
 				activity.displayPositiveMessage();
 			} else {
-				// Here we simply display the first correction from the list of violated metric checks.
-				activity.displayCorrection(violatedMetricChecks.get(0).getName());
+				// Here we simply display the first correction from the list of violated feedbacks.
+				activity.displayCorrection(violatedFeedbacks.get(0).getName());
 			}
 		}
 
