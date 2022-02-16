@@ -1,5 +1,7 @@
 package org.vay.sampleapp;
 
+import static ai.vay.client.api.SessionQuality.*;
+
 import android.util.Log;
 
 import androidx.camera.core.ImageProxy;
@@ -10,6 +12,7 @@ import java.util.Map;
 
 import ai.vay.client.api.Analyser;
 import ai.vay.client.api.Listener;
+import ai.vay.client.api.SessionQuality;
 import ai.vay.client.api.SessionState;
 import ai.vay.client.api.events.ErrorEvent;
 import ai.vay.client.api.events.FeedbackEvent;
@@ -132,9 +135,24 @@ public class AnalyserWrapper {
 			activity.setStateIndicationColor(sessionState);
 		}
 
-		/** NOT YET IMPLEMENTED **/
+		/** The session quality quantifies the LATENCY and the ENVIRONMENT. If one of these subjects
+		 *  changes, the SessionQualityChangedEvent is called, where the new ratings for both
+		 *  subjects are provided. Possible qualities are:
+		 * 		BAD - The quality is too bad to analyse images, no analysis is conducted.
+		 * 		POOR - The quality is poor but still good enough to perform the movement analysis, the accuracy might be affected.
+		 * 		GOOD - The quality is optimal.
+		 * 	In this sample we only show a warning, if either quality is poor.	**/
 		@Override
 		public void onSessionQualityChanged(SessionQualityChangedEvent event) {
+			Quality latency = event.getSessionQuality().getQuality().get(
+					Subject.LATENCY);
+			Quality environment = event.getSessionQuality().getQuality().get(
+					Subject.ENVIRONMENT);
+			if (latency == Quality.POOR || environment == Quality.POOR) {
+				activity.setConnectivityWarningText("POOR SESSION QUALITY DETECTED!");
+			} else {
+				activity.setConnectivityWarningText("");
+			}
 		}
 
 		/** Clears the old graphic and sets a new one. Used to redraw the skeleton. **/

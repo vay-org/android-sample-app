@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 	private TextView repetitionsText;
 	private TextView feedbackBox;
 	private TextView currentMovementText;
+	private TextView connectivityWarningText;
 
 	// Camera
 	private final int MY_PERMISSION_REQUEST_CAMERA = 8;
@@ -63,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 		repetitionsText = findViewById(R.id.rep_count);
 		feedbackBox = findViewById(R.id.feedback_text);
 		currentMovementText = findViewById(R.id.phase_info);
+		connectivityWarningText = findViewById(R.id.connectivityWarning);
 
 		// As creating the analyserWrapper contains network operations, it must be done on a separate thread.
 		new Thread(this::createAnalyserWrapper).start();
@@ -212,9 +214,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	public void displayPositioningGuidance(String instructions) {
-		runOnUiThread(()->{
-			feedbackBox.setText(instructions);
-		});
+		runOnUiThread(()-> feedbackBox.setText(instructions));
 	}
 
 	public void setStateIndicationColor(SessionState sessionState) {
@@ -230,6 +230,10 @@ public class MainActivity extends AppCompatActivity {
 				feedbackBox.setBackgroundColor(Color.rgb(10, 171, 173));
 		}
 		});
+	}
+
+	public void setConnectivityWarningText(String warningText) {
+		setViewText(connectivityWarningText, warningText);
 	}
 
 	private void setViewText(TextView view, String text) {
