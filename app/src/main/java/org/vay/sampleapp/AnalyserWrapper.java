@@ -1,6 +1,5 @@
 package org.vay.sampleapp;
 
-import android.annotation.SuppressLint;
 import android.util.Log;
 
 import androidx.camera.core.ImageProxy;
@@ -11,7 +10,9 @@ import java.util.Map;
 
 import ai.vay.client.api.Analyser;
 import ai.vay.client.api.Listener;
+import ai.vay.client.api.SessionState;
 import ai.vay.client.api.events.ErrorEvent;
+import ai.vay.client.api.events.FeedbackEvent;
 import ai.vay.client.api.events.PoseEvent;
 import ai.vay.client.api.events.ReadyEvent;
 import ai.vay.client.api.events.RepetitionEvent;
@@ -52,7 +53,6 @@ public class AnalyserWrapper {
 
 	/** Prepares and enqueues the current image. Converts the imageProxy (received by the cameraX
 	 * analyser function) to byte array, rotating it upright if needed. **/
-	@SuppressLint("UnsafeExperimentalUsageError")
 	public void setPendingImage(ImageProxy imageProxy) {
 		if (isShutdown) {
 			return;
@@ -63,6 +63,7 @@ public class AnalyserWrapper {
 	/** Anonymous inner listener class where custom behaviour upon various events can be defined. **/
 	private final Listener listener = new Listener() {
 		private final String TAG = this.getClass().getSimpleName();
+		private SessionState sessionState = SessionState.NO_HUMAN;
 		private int correctReps = 0;
 		private final Object lock = new Object();
 
@@ -77,6 +78,19 @@ public class AnalyserWrapper {
 		public void onPose(PoseEvent ImageResponseEvent) {
 			Map<BodyPointType, Point> points = ImageResponseEvent.getPose().getPoints();
 			resetGraphic(points); // Redraws the skeleton.
+		}
+
+		/** Here real time feedback is received. During exercising, this event is called anytime
+		 * a movement violation is detected and will contain the relevant violated metric(s).
+		 * While not in exercising state, positioning guidance - which instructs the user on how to
+		 * get into exercising state - is received here. In this sample onFeedback is only used for
+		 * positioning guidance. **/
+		@Override
+		public void onFeedback(FeedbackEvent FeedbackEvent) {
+			if (sessionState != SessionState.EXERCISING) {
+				// As the feedbacks are ordered by priority the first one will be the most relevant.
+				activity.displayPositioningGuidance(FeedbackEvent.getFeedbacks().get(0).getMessages().get(0));
+			}
 		}
 
 		/** Whenever a repetition is completed (with or without metric violations) this listener gets
@@ -105,14 +119,17 @@ public class AnalyserWrapper {
 		/** Gets called when an error occurs. **/
 		@Override
 		public void onError(ErrorEvent errorEvent) {
-			Log.d(TAG, errorEvent.getErrorText());
+			Log.d(TAG, "Error type: " + errorEvent.getErrorType().name() + " Error message: " +
+					errorEvent.getErrorText());
 		}
 
 		/** Gets called when the session state changes. There are three states: NO_HUMAN, POSITIONING
 		 * and EXERCISING **/
 		@Override
 		public void onSessionStateChanged(SessionStateChangedEvent event) {
-			activity.setCurrentMovementText(event.getSessionState().name());
+			sessionState = event.getSessionState();
+			activity.setCurrentMovementText(sessionState.name());
+			activity.setStateIndicationColor(sessionState);
 		}
 
 		/** NOT YET IMPLEMENTED **/

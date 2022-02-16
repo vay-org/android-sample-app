@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+import ai.vay.client.api.SessionState;
+
 public class MainActivity extends AppCompatActivity {
 	private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -206,6 +208,27 @@ public class MainActivity extends AppCompatActivity {
 		runOnUiThread(()->{
 			feedbackBox.setText(R.string.good_job);
 			feedbackBox.setBackgroundColor(Color.rgb(105, 255, 115));
+		});
+	}
+
+	public void displayPositioningGuidance(String instructions) {
+		runOnUiThread(()->{
+			feedbackBox.setText(instructions);
+		});
+	}
+
+	public void setStateIndicationColor(SessionState sessionState) {
+		runOnUiThread(()->{
+		switch (sessionState) {
+			case NO_HUMAN:
+				feedbackBox.setBackgroundColor(Color.rgb(176, 106, 2));
+				break;
+			case POSITIONING:
+				feedbackBox.setBackgroundColor(Color.rgb(168, 166, 19));
+				break;
+			default:
+				feedbackBox.setBackgroundColor(Color.rgb(10, 171, 173));
+		}
 		});
 	}
 
