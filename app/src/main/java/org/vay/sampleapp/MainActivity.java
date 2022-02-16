@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
 		final ImageAnalysis analysisUseCase = builder.build();
 
 		needUpdateGraphicOverlayImageSourceInfo = true;
-		analysisUseCase.setAnalyzer(Executors.newSingleThreadExecutor(), imageProxy -> { // ContextCompat.getMainExecutor(this)
+		analysisUseCase.setAnalyzer(Executors.newSingleThreadExecutor(), imageProxy -> {
 			// AnalyzerWrapper could be null, if it has not yet been created. In that case we do nothing.
 			if (analyserWrapper != null) {
 				if (needUpdateGraphicOverlayImageSourceInfo) {
