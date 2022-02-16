@@ -67,6 +67,7 @@ public class AnalyserWrapper {
 	private final Listener listener = new Listener() {
 		private final String TAG = this.getClass().getSimpleName();
 		private SessionState sessionState = SessionState.NO_HUMAN;
+		private SessionState previousSessionState = SessionState.NO_HUMAN;
 		private int correctReps = 0;
 		private final Object lock = new Object();
 
@@ -133,6 +134,11 @@ public class AnalyserWrapper {
 			sessionState = event.getSessionState();
 			activity.setCurrentMovementText(sessionState.name());
 			activity.setStateIndicationColor(sessionState);
+			if (previousSessionState == SessionState.POSITIONING &&
+				sessionState == SessionState.EXERCISING) {
+				activity.displayPositioningGuidance("Positioning successful");
+			}
+			previousSessionState = sessionState;
 		}
 
 		/** The session quality quantifies the LATENCY and the ENVIRONMENT. If one of these subjects
