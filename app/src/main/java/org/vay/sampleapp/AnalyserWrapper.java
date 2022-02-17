@@ -111,7 +111,7 @@ public class AnalyserWrapper {
 				activity.displayPositiveMessage();
 			} else {
 				// Here we simply display the first correction from the list of violated feedbacks.
-				activity.displayCorrection(violatedFeedbacks.get(0).getName());
+				activity.displayCorrection(violatedFeedbacks.get(0).getMessages().get(0));
 			}
 		}
 
