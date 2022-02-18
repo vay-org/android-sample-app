@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 	private GraphicOverlay graphicOverlay;
 	private TextView repetitionsText;
 	private TextView feedbackBox;
-	private TextView currentMovementText;
+	private TextView currentStateText;
 	private TextView connectivityWarningText;
 
 	// Camera
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 		graphicOverlay = findViewById(R.id.overlay_view);
 		repetitionsText = findViewById(R.id.rep_count);
 		feedbackBox = findViewById(R.id.feedback_text);
-		currentMovementText = findViewById(R.id.phase_info);
+		currentStateText = findViewById(R.id.state_info);
 		connectivityWarningText = findViewById(R.id.connectivityWarning);
 
 		// As creating the analyserWrapper contains network operations, it must be done on a separate thread.
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
 		try {
 			analyserWrapper = new AnalyserWrapper(url, graphicOverlay, this, exerciseKey);
 		} catch (IOException e) {
-			Log.e(TAG, "Creating AnalyserWrapper failed.");
+			Log.e(TAG, "Creating AnalyserWrapper failed: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -195,8 +195,8 @@ public class MainActivity extends AppCompatActivity {
 		setViewText(repetitionsText, String.format(getString(R.string.repetitions_text), reps));
 	}
 
-	public void setCurrentMovementText(String text) {
-		setViewText(currentMovementText, text);
+	public void setCurrentStateText(String text) {
+		setViewText(currentStateText, text);
 	}
 
 	public void displayCorrection(String feedback) {

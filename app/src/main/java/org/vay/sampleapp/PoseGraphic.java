@@ -17,11 +17,7 @@ import ai.vay.client.model.human.Point;
 /** Custom Graphic class to visualize and connect the received points, rendering a skeleton. **/
 public class PoseGraphic extends GraphicOverlay.Graphic {
 	private static final float DOT_RADIUS = 8.0f;
-	private static final float IN_FRAME_LIKELIHOOD_TEXT_SIZE = 30.0f;
 	private static final float STROKE_WIDTH = 10.0f;
-
-	private final boolean showLikelihood;
-
 	private final Paint whitePaint;
 	private final Map<BodyPointType, Point> points;
 	// Defines the connections between the different points to draw the skeleton.
@@ -43,17 +39,13 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 	);
 	private final double mScore = 0.6; // Set confidentiality score threshold here.
 
-	// If showLikelihood is true, the score of each point will be displayed.
 	public PoseGraphic(GraphicOverlay overlay,
-					   Map<BodyPointType, Point> pointsMap,
-					   boolean showLikelihood) {
+					   Map<BodyPointType, Point> pointsMap) {
 		super(overlay);
 		this.points = pointsMap;
-		this.showLikelihood = showLikelihood;
 		whitePaint = new Paint();
 		whitePaint.setStrokeWidth(STROKE_WIDTH);
 		whitePaint.setColor(Color.WHITE);
-		whitePaint.setTextSize(IN_FRAME_LIKELIHOOD_TEXT_SIZE);
 	}
 
 	@Override
@@ -69,14 +61,6 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 				canvas.drawCircle(
 						translateX((float) point.getX()), translateY((float) point.getY()),
 						DOT_RADIUS, whitePaint);
-				if (showLikelihood) {
-					canvas.drawText(
-							String.format(Locale.ENGLISH, "%.2f", point.getScore()),
-							translateX((float) point.getX()),
-							translateY((float) point.getY()),
-							whitePaint
-					);
-				}
 			}
 		}
 	}

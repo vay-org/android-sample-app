@@ -34,13 +34,13 @@ public class AnalyserWrapper {
 	private GraphicOverlay overlay;
 	private final MainActivity activity;
 	private boolean isShutdown = false;
-	private final String token = "DUMMY-ANDROID-API-KEY";
+	private final String apiKey = "DUMMY-ANDROID-API-KEY";
 
-	public AnalyserWrapper(String url, GraphicOverlay overlay, MainActivity activity, int exerciseKey) throws IOException {
+	public AnalyserWrapper(String url, GraphicOverlay overlay, MainActivity activity, int exerciseKey)
+			throws IOException {
 		this.overlay = overlay;
 		this.activity = activity;
-		this.analyser = AnalyserFactory.createStreamingAnalyser(
-				url, token, exerciseKey, listener);
+		this.analyser = AnalyserFactory.createStreamingAnalyser(url, apiKey, exerciseKey, listener);
 	}
 
 	/** Used to set a new GraphicOverlay in case configurations change. **/
@@ -82,7 +82,7 @@ public class AnalyserWrapper {
 		@Override
 		public void onPose(PoseEvent event) {
 			Map<BodyPointType, Point> points = event.getPose().getPoints();
-			resetGraphic(points); // Redraws the skeleton.
+			updateGraphic(points); // Redraws the skeleton.
 		}
 
 		/** Here real time feedback is received. During exercising, this event is called anytime
@@ -93,7 +93,7 @@ public class AnalyserWrapper {
 		@Override
 		public void onFeedback(FeedbackEvent event) {
 			if (sessionState != SessionState.EXERCISING) {
-				// As the feedback is ordered by priority the first one will be the most relevant.
+				// Get the first feedback.
 				activity.displayPositioningGuidance(event.getFeedbacks().get(0).getMessages().get(0));
 			}
 		}
@@ -134,7 +134,7 @@ public class AnalyserWrapper {
 		public void onSessionStateChanged(SessionStateChangedEvent event) {
 			SessionState previousSessionState = sessionState;
 			sessionState = event.getSessionState();
-			activity.setCurrentMovementText(sessionState.name());
+			activity.setCurrentStateText(sessionState.name());
 			activity.setStateIndicationColor(sessionState);
 			if (previousSessionState == SessionState.POSITIONING &&
 				sessionState == SessionState.EXERCISING) {
@@ -145,16 +145,15 @@ public class AnalyserWrapper {
 		/** The session quality quantifies the LATENCY and the ENVIRONMENT. If one of these subjects
 		 *  changes, the SessionQualityChangedEvent is called, where the new ratings for both
 		 *  subjects are provided. Possible qualities are:
-		 * 		BAD - The quality is too bad to analyse images, no analysis is conducted.
-		 * 		POOR - The quality is poor but still good enough to perform the movement analysis, the accuracy might be affected.
-		 * 		GOOD - The quality is optimal.
+		 * 	BAD - The quality is too bad to analyse images, no analysis is conducted.
+		 * 	POOR - The quality is poor but still good enough to perform the movement analysis,
+		 * 		the accuracy might be affected.
+		 * 	GOOD - The quality is optimal.
 		 * 	In this sample we only show a warning, if either quality is poor.	**/
 		@Override
 		public void onSessionQualityChanged(SessionQualityChangedEvent event) {
-			Quality latency = event.getSessionQuality().getQuality().get(
-					Subject.LATENCY);
-			Quality environment = event.getSessionQuality().getQuality().get(
-					Subject.ENVIRONMENT);
+			Quality latency = event.getSessionQuality().getQuality().get(Subject.LATENCY);
+			Quality environment = event.getSessionQuality().getQuality().get(Subject.ENVIRONMENT);
 			if (latency == Quality.POOR || environment == Quality.POOR) {
 				activity.setConnectivityWarningText("POOR SESSION QUALITY DETECTED!");
 			} else {
@@ -163,10 +162,10 @@ public class AnalyserWrapper {
 		}
 
 		/** Clears the old graphic and sets a new one. Used to redraw the skeleton. **/
-		private void resetGraphic(Map<BodyPointType, Point> points) {
+		private void updateGraphic(Map<BodyPointType, Point> points) {
 			synchronized (lock) {
 				overlay.clear();
-				overlay.add(new PoseGraphic(overlay, points, false));
+				overlay.add(new PoseGraphic(overlay, points));
 				overlay.postInvalidate();
 			}
 		}
