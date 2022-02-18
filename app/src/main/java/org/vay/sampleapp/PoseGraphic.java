@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import ai.vay.client.model.human.BodyPointType;
+import ai.vay.client.model.human.Point;
 
 /** Custom Graphic class to visualize and connect the received points, rendering a skeleton. **/
 public class PoseGraphic extends GraphicOverlay.Graphic {
@@ -22,7 +23,7 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 	private final boolean showLikelihood;
 
 	private final Paint whitePaint;
-	private final Map<BodyPointType, ai.vay.client.model.human.Point> points;
+	private final Map<BodyPointType, Point> points;
 	// Defines the connections between the different points to draw the skeleton.
 	private final List<Map.Entry<BodyPointType, BodyPointType>> lineConnections = Arrays.asList(
 			new AbstractMap.SimpleEntry<>(BodyPointType.NOSE, BodyPointType.NECK),
@@ -44,7 +45,7 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 
 	// If showLikelihood is true, the score of each point will be displayed.
 	public PoseGraphic(GraphicOverlay overlay,
-					   Map<BodyPointType, ai.vay.client.model.human.Point> pointsMap,
+					   Map<BodyPointType, Point> pointsMap,
 					   boolean showLikelihood) {
 		super(overlay);
 		this.points = pointsMap;
@@ -62,7 +63,7 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 	}
 
 	private void drawPoints(Canvas canvas) {
-		for (ai.vay.client.model.human.Point point : points.values()) {
+		for (Point point : points.values()) {
 			if (point.getScore() > mScore) {
 				// Draw circle needs the coordinates of its center and its radius combined with a paint.
 				canvas.drawCircle(

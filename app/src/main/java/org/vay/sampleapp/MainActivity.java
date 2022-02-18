@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
 		try {
 			analyserWrapper = new AnalyserWrapper(url, graphicOverlay, this, exerciseKey);
 		} catch (IOException e) {
-			Log.e(TAG, "Creating VAY analyser failed.");
+			Log.e(TAG, "Creating AnalyserWrapper failed.");
 			e.printStackTrace();
 		}
 	}

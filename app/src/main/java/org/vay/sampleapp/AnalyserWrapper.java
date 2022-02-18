@@ -1,7 +1,5 @@
 package org.vay.sampleapp;
 
-import static ai.vay.client.api.SessionQuality.*;
-
 import android.util.Log;
 
 import androidx.camera.core.ImageProxy;
@@ -11,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import ai.vay.client.api.Analyser;
+import ai.vay.client.api.AnalyserInput;
 import ai.vay.client.api.Listener;
-import ai.vay.client.api.SessionQuality;
 import ai.vay.client.api.SessionState;
 import ai.vay.client.api.events.ErrorEvent;
 import ai.vay.client.api.events.FeedbackEvent;
@@ -21,12 +19,14 @@ import ai.vay.client.api.events.ReadyEvent;
 import ai.vay.client.api.events.RepetitionEvent;
 import ai.vay.client.api.events.SessionQualityChangedEvent;
 import ai.vay.client.api.events.SessionStateChangedEvent;
+import ai.vay.client.api.SessionQuality.Quality;
+import ai.vay.client.api.SessionQuality.Subject;
 import ai.vay.client.impl.AnalyserFactory;
 import ai.vay.client.model.human.BodyPointType;
 import ai.vay.client.model.human.Point;
 import ai.vay.client.model.motion.Feedback;
 
-/** Analyser  wrapper class responsible for creating and closing the analyser,
+/** Analyser wrapper class responsible for creating and closing the analyser,
  * as well as enqueueing the current image. **/
 public class AnalyserWrapper {
 	private final String TAG = this.getClass().getSimpleName();
@@ -60,27 +60,28 @@ public class AnalyserWrapper {
 		if (isShutdown) {
 			return;
 		}
-		analyser.enqueueInput(AnalyserFactory.createInput(ImageConverter.getByteArrayFromImageProxy(imageProxy)));
+		byte[] bytes = ImageConverter.getByteArrayFromImageProxy(imageProxy);
+		AnalyserInput input = AnalyserFactory.createInput(bytes);
+		analyser.enqueueInput(input);
 	}
 
 	/** Anonymous inner listener class where custom behaviour upon various events can be defined. **/
 	private final Listener listener = new Listener() {
 		private final String TAG = this.getClass().getSimpleName();
 		private SessionState sessionState = SessionState.NO_HUMAN;
-		private SessionState previousSessionState = SessionState.NO_HUMAN;
-		private int correctReps = 0;
+		private int correctRepetitions = 0;
 		private final Object lock = new Object();
 
 		/** Gets called after the connection has been established. **/
 		@Override
-		public void onReady(ReadyEvent ReadyEvent) {
+		public void onReady(ReadyEvent event) {
 		}
 
 		/** The results of the image analysis (keypoints) - for each sent frame - are received here.
 		 *  If you visualize the points, they should be updated here. **/
 		@Override
-		public void onPose(PoseEvent ImageResponseEvent) {
-			Map<BodyPointType, Point> points = ImageResponseEvent.getPose().getPoints();
+		public void onPose(PoseEvent event) {
+			Map<BodyPointType, Point> points = event.getPose().getPoints();
 			resetGraphic(points); // Redraws the skeleton.
 		}
 
@@ -90,28 +91,28 @@ public class AnalyserWrapper {
 		 * get into exercising state - is received here. In this sample onFeedback is only used for
 		 * positioning guidance. **/
 		@Override
-		public void onFeedback(FeedbackEvent FeedbackEvent) {
+		public void onFeedback(FeedbackEvent event) {
 			if (sessionState != SessionState.EXERCISING) {
-				// As the feedbacks are ordered by priority the first one will be the most relevant.
-				activity.displayPositioningGuidance(FeedbackEvent.getFeedbacks().get(0).getMessages().get(0));
+				// As the feedback is ordered by priority the first one will be the most relevant.
+				activity.displayPositioningGuidance(event.getFeedbacks().get(0).getMessages().get(0));
 			}
 		}
 
-		/** Whenever a repetition is completed (with or without metric violations) this listener gets
-		 *  called. Use this listener to count reps (here only correct reps are counted) and get the
-		 *  corresponding corrections for faulty reps. **/
+		/** Whenever a repetition is completed (with or without metric violations) this event gets
+		 *  called. Use this event to count repetitions (here only correct ones are counted) and get
+		 *  the corresponding corrections for faulty repetitions. **/
 		@Override
-		public void onRepetition(RepetitionEvent RepetitionEvent) {
-			// A list of violated feedbacks for this rep.
-			List<Feedback> violatedFeedbacks = RepetitionEvent.getRepetition()
-					.getFeedbacks();
-			if (violatedFeedbacks.isEmpty()) {
-				correctReps++;
-				activity.setRepetitionsText(correctReps);
+		public void onRepetition(RepetitionEvent event) {
+			// A list of feedback for this repetition.
+			List<Feedback> feedback = event.getRepetition().getFeedbacks();
+			// If no feedback was generated, this means the repetition was performed correctly.
+			if (feedback.isEmpty()) {
+				correctRepetitions++;
+				activity.setRepetitionsText(correctRepetitions);
 				activity.displayPositiveMessage();
 			} else {
-				// Here we simply display the first correction from the list of violated feedbacks.
-				activity.displayCorrection(violatedFeedbacks.get(0).getMessages().get(0));
+				// Here we simply display the first correction from the list of feedback.
+				activity.displayCorrection(feedback.get(0).getMessages().get(0));
 			}
 		}
 
@@ -122,15 +123,16 @@ public class AnalyserWrapper {
 
 		/** Gets called when an error occurs. **/
 		@Override
-		public void onError(ErrorEvent errorEvent) {
-			Log.d(TAG, "Error type: " + errorEvent.getErrorType().name() + " Error message: " +
-					errorEvent.getErrorText());
+		public void onError(ErrorEvent event) {
+			Log.d(TAG, "Error type: " + event.getErrorType().name() + " Error message: " +
+					event.getErrorText());
 		}
 
 		/** Gets called when the session state changes. There are three states: NO_HUMAN, POSITIONING
 		 * and EXERCISING **/
 		@Override
 		public void onSessionStateChanged(SessionStateChangedEvent event) {
+			SessionState previousSessionState = sessionState;
 			sessionState = event.getSessionState();
 			activity.setCurrentMovementText(sessionState.name());
 			activity.setStateIndicationColor(sessionState);
@@ -138,7 +140,6 @@ public class AnalyserWrapper {
 				sessionState == SessionState.EXERCISING) {
 				activity.displayPositioningGuidance("Positioning successful");
 			}
-			previousSessionState = sessionState;
 		}
 
 		/** The session quality quantifies the LATENCY and the ENVIRONMENT. If one of these subjects
