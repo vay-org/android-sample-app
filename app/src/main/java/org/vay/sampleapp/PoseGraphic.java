@@ -66,7 +66,7 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 	private void drawLines(Canvas canvas) {
 		for (Map.Entry<BodyPointType, BodyPointType> entry : lineConnections) {
 			Point startPoint = points.get(entry.getKey());
-			Point endPoint = points.get(entry.getKey());
+			Point endPoint = points.get(entry.getValue());
 			if (startPoint == null || endPoint == null) {
 				continue;
 			}
