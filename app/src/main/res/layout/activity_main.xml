@@ -56,7 +56,7 @@
             app:layout_constraintTop_toBottomOf="@+id/feedback_text" />
 
         <TextView
-            android:id="@+id/phase_info"
+            android:id="@+id/state_info"
             android:layout_width="wrap_content"
             android:layout_height="80dp"
             android:layout_marginStart="32dp"
@@ -65,6 +65,17 @@
             android:textColor="#FFFFFF"
             android:textSize="26sp"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/feedback_text" />
+
+        <TextView
+            android:id="@+id/connectivityWarning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#fc0303"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/feedback_text" />
 

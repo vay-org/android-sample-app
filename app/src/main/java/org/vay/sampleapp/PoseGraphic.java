@@ -3,49 +3,47 @@ package org.vay.sampleapp;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.PointF;
 
-import com.vaysports.vup.VaysportsVup;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
-import java.util.Locale;
+import ai.vay.client.model.human.BodyPointType;
+import ai.vay.client.model.human.Point;
 
 /** Custom Graphic class to visualize and connect the received points, rendering a skeleton. **/
 public class PoseGraphic extends GraphicOverlay.Graphic {
 	private static final float DOT_RADIUS = 8.0f;
-	private static final float IN_FRAME_LIKELIHOOD_TEXT_SIZE = 30.0f;
 	private static final float STROKE_WIDTH = 10.0f;
-
-	private final boolean showLikelihood;
-
 	private final Paint whitePaint;
-	private final VaysportsVup.Point[] points;
-	private final Point[] lineCoordinates = new Point[]{ // Coordinates to connect points.
-			new Point(0, 1), // Nose to neck.
-			new Point(1, 6), // Neck to left shoulder.
-			new Point(6, 8), // Left shoulder to left elbow.
-			new Point(8, 10), // Left elbow to left  wrist.
-			new Point(1, 7), // Neck to right shoulder.
-			new Point(7, 9), // Right shoulder to right elbow.
-			new Point(9, 11), // Right elbow to right wrist.
-			new Point(1, 18), // Neck to middle hip.
-			new Point(12, 18), // Left and middle hip.
-			new Point(13, 18), // Right and middle hip.
-			new Point(12, 14), // Left hip to left knee.
-			new Point(14, 16), // Left knee to left ankle.
-			new Point(13, 15), // Right hip to right knee.
-			new Point(15, 17)}; // Right knee to right ankle.
-	private final double mScore = 0.6; // Set confidentiality score threshold here.
+	private final Map<BodyPointType, Point> points;
+	// Defines the connections between the different points to draw the skeleton.
+	private final List<Map.Entry<BodyPointType, BodyPointType>> lineConnections = Arrays.asList(
+			new AbstractMap.SimpleEntry<>(BodyPointType.NOSE, BodyPointType.NECK),
+			new AbstractMap.SimpleEntry<>(BodyPointType.NECK, BodyPointType.LEFT_SHOULDER),
+			new AbstractMap.SimpleEntry<>(BodyPointType.LEFT_SHOULDER, BodyPointType.LEFT_ELBOW),
+			new AbstractMap.SimpleEntry<>(BodyPointType.LEFT_ELBOW, BodyPointType.LEFT_WRIST),
+			new AbstractMap.SimpleEntry<>(BodyPointType.NECK, BodyPointType.RIGHT_SHOULDER),
+			new AbstractMap.SimpleEntry<>(BodyPointType.RIGHT_SHOULDER, BodyPointType.RIGHT_ELBOW),
+			new AbstractMap.SimpleEntry<>(BodyPointType.RIGHT_ELBOW, BodyPointType.RIGHT_WRIST),
+			new AbstractMap.SimpleEntry<>(BodyPointType.NECK, BodyPointType.MID_HIP),
+			new AbstractMap.SimpleEntry<>(BodyPointType.LEFT_HIP, BodyPointType.MID_HIP),
+			new AbstractMap.SimpleEntry<>(BodyPointType.RIGHT_HIP, BodyPointType.MID_HIP),
+			new AbstractMap.SimpleEntry<>(BodyPointType.LEFT_HIP, BodyPointType.LEFT_KNEE),
+			new AbstractMap.SimpleEntry<>(BodyPointType.LEFT_KNEE, BodyPointType.LEFT_ANKLE),
+			new AbstractMap.SimpleEntry<>(BodyPointType.RIGHT_HIP, BodyPointType.RIGHT_KNEE),
+			new AbstractMap.SimpleEntry<>(BodyPointType.RIGHT_KNEE, BodyPointType.RIGHT_ANKLE)
+	);
 
-	// If showLikelihood is true, the score of each point will be displayed.
-	public PoseGraphic(GraphicOverlay overlay, VaysportsVup.HumanPoints humanPoints, boolean showLikelihood) {
+	public PoseGraphic(GraphicOverlay overlay,
+					   Map<BodyPointType, Point> pointsMap) {
 		super(overlay);
-		this.points = assignPoints(humanPoints);
-		this.showLikelihood = showLikelihood;
+		this.points = pointsMap;
 		whitePaint = new Paint();
 		whitePaint.setStrokeWidth(STROKE_WIDTH);
 		whitePaint.setColor(Color.WHITE);
-		whitePaint.setTextSize(IN_FRAME_LIKELIHOOD_TEXT_SIZE);
 	}
 
 	@Override
@@ -55,57 +53,31 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 	}
 
 	private void drawPoints(Canvas canvas) {
-		for (VaysportsVup.Point point : points) {
-			if (point.getScore() > mScore) {
+		for (Point point : points.values()) {
+			if (point.isAccurate()) {
 				// Draw circle needs the coordinates of its center and its radius combined with a paint.
 				canvas.drawCircle(
 						translateX((float) point.getX()), translateY((float) point.getY()),
 						DOT_RADIUS, whitePaint);
-				if (showLikelihood) {
-					canvas.drawText(
-							String.format(Locale.ENGLISH, "%.2f", point.getScore()),
-							translateX((float) point.getX()),
-							translateY((float) point.getY()),
-							whitePaint
-					);
-				}
 			}
 		}
 	}
 
 	private void drawLines(Canvas canvas) {
-		for (Point linePoint : lineCoordinates) {
-			PointF start = new PointF(translateX((float) points[linePoint.x].getX()), translateY((float) points[linePoint.x].getY()));
-			PointF end = new PointF(translateX((float) points[linePoint.y].getX()), translateY((float) points[linePoint.y].getY()));
-			if (points[linePoint.x].getScore() > mScore && points[linePoint.y].getScore() > mScore) {
-				canvas.drawLine(
-						start.x, start.y, end.x, end.y,
-						whitePaint);
+		for (Map.Entry<BodyPointType, BodyPointType> entry : lineConnections) {
+			Point startPoint = points.get(entry.getKey());
+			Point endPoint = points.get(entry.getValue());
+			if (startPoint == null || endPoint == null ||
+					!startPoint.isAccurate() || !endPoint.isAccurate()) {
+				continue;
 			}
+			PointF start = new PointF(
+					translateX((float) startPoint.getX()),
+					translateY((float) startPoint.getY()));
+			PointF end = new PointF(
+					translateX((float) endPoint.getX()),
+					translateY((float) endPoint.getY()));
+			canvas.drawLine(start.x, start.y, end.x, end.y, whitePaint);
 		}
-	}
-
-	/** Assigns individual points into a (vup)point array. **/
-	private VaysportsVup.Point[] assignPoints(VaysportsVup.HumanPoints humanPoints) {
-		return new VaysportsVup.Point[]{
-				humanPoints.getNose(),
-				humanPoints.getNeck(),
-				humanPoints.getLeftEar(),
-				humanPoints.getRightEar(),
-				humanPoints.getLeftEye(),
-				humanPoints.getRightEye(),
-				humanPoints.getLeftShoulder(),
-				humanPoints.getRightShoulder(),
-				humanPoints.getLeftElbow(),
-				humanPoints.getRightElbow(),
-				humanPoints.getLeftWrist(),
-				humanPoints.getRightWrist(),
-				humanPoints.getLeftHip(),
-				humanPoints.getRightHip(),
-				humanPoints.getLeftKnee(),
-				humanPoints.getRightKnee(),
-				humanPoints.getLeftAnkle(),
-				humanPoints.getRightAnkle(),
-				humanPoints.getMidHip()};
 	}
 }
