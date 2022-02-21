@@ -67,7 +67,8 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 		for (Map.Entry<BodyPointType, BodyPointType> entry : lineConnections) {
 			Point startPoint = points.get(entry.getKey());
 			Point endPoint = points.get(entry.getValue());
-			if (startPoint == null || endPoint == null) {
+			if (startPoint == null || endPoint == null ||
+					!startPoint.isAccurate() || !endPoint.isAccurate()) {
 				continue;
 			}
 			PointF start = new PointF(
@@ -76,11 +77,7 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 			PointF end = new PointF(
 					translateX((float) endPoint.getX()),
 					translateY((float) endPoint.getY()));
-			if (startPoint.isAccurate() && endPoint.isAccurate()) {
-				canvas.drawLine(
-						start.x, start.y, end.x, end.y,
-						whitePaint);
-			}
+			canvas.drawLine(start.x, start.y, end.x, end.y, whitePaint);
 		}
 	}
 }
