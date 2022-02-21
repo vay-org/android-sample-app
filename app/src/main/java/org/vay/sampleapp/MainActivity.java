@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
 		needUpdateGraphicOverlayImageSourceInfo = true;
 		analysisUseCase.setAnalyzer(Executors.newSingleThreadExecutor(), imageProxy -> {
-			// AnalyzerWrapper could be null, if it has not yet been created. In that case we do nothing.
+			// AnalyserWrapper could be null, if it has not yet been created. In that case we do nothing.
 			if (analyserWrapper != null) {
 				if (needUpdateGraphicOverlayImageSourceInfo) {
 					boolean isImageFlipped = lensFacing == CameraSelector.LENS_FACING_FRONT;

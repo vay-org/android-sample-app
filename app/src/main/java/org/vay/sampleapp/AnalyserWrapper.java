@@ -86,19 +86,18 @@ public class AnalyserWrapper {
 		}
 
 		/** Here real time feedback is received. During exercising, this event is called anytime
-		 * a movement violation is detected and will contain the relevant violated metric(s).
-		 * While not in exercising state, positioning guidance - which instructs the user on how to
-		 * get into exercising state - is received here. In this sample onFeedback is only used for
-		 * positioning guidance. **/
+		 * feedback is generated. While not in exercising state, positioning guidance - which
+		 * instructs the user on how to get into exercising state - is received here. In this
+		 * sample, onFeedback is only used for positioning guidance. **/
 		@Override
 		public void onFeedback(FeedbackEvent event) {
 			if (sessionState != SessionState.EXERCISING) {
-				// Get the first feedback.
+				// In our simplified sample app, we only display the first feedback.
 				activity.displayPositioningGuidance(event.getFeedbacks().get(0).getMessages().get(0));
 			}
 		}
 
-		/** Whenever a repetition is completed (with or without metric violations) this event gets
+		/** Whenever a repetition is completed (correct or incorrect) this event gets
 		 *  called. Use this event to count repetitions (here only correct ones are counted) and get
 		 *  the corresponding corrections for faulty repetitions. **/
 		@Override

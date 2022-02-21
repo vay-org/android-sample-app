@@ -8,7 +8,6 @@ import android.graphics.PointF;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import ai.vay.client.model.human.BodyPointType;
@@ -37,7 +36,6 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 			new AbstractMap.SimpleEntry<>(BodyPointType.RIGHT_HIP, BodyPointType.RIGHT_KNEE),
 			new AbstractMap.SimpleEntry<>(BodyPointType.RIGHT_KNEE, BodyPointType.RIGHT_ANKLE)
 	);
-	private final double mScore = 0.6; // Set confidentiality score threshold here.
 
 	public PoseGraphic(GraphicOverlay overlay,
 					   Map<BodyPointType, Point> pointsMap) {
@@ -56,7 +54,7 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 
 	private void drawPoints(Canvas canvas) {
 		for (Point point : points.values()) {
-			if (point.getScore() > mScore) {
+			if (point.isAccurate()) {
 				// Draw circle needs the coordinates of its center and its radius combined with a paint.
 				canvas.drawCircle(
 						translateX((float) point.getX()), translateY((float) point.getY()),
@@ -67,14 +65,18 @@ public class PoseGraphic extends GraphicOverlay.Graphic {
 
 	private void drawLines(Canvas canvas) {
 		for (Map.Entry<BodyPointType, BodyPointType> entry : lineConnections) {
+			Point startPoint = points.get(entry.getKey());
+			Point endPoint = points.get(entry.getKey());
+			if (startPoint == null || endPoint == null) {
+				continue;
+			}
 			PointF start = new PointF(
-					translateX((float) points.get(entry.getKey()).getX()),
-					translateY((float) points.get(entry.getKey()).getY()));
+					translateX((float) startPoint.getX()),
+					translateY((float) startPoint.getY()));
 			PointF end = new PointF(
-					translateX((float) points.get(entry.getValue()).getX()),
-					translateY((float) points.get(entry.getValue()).getY()));
-			if (points.get(entry.getKey()).getScore() > mScore &&
-					points.get(entry.getValue()).getScore() > mScore) {
+					translateX((float) endPoint.getX()),
+					translateY((float) endPoint.getY()));
+			if (startPoint.isAccurate() && endPoint.isAccurate()) {
 				canvas.drawLine(
 						start.x, start.y, end.x, end.y,
 						whitePaint);
